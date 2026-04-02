@@ -1,0 +1,25 @@
+{
+  "name": "structureclaw-cli",
+  "version": "0.1.0",
+  "description": "CLI wrapper for StructureClaw local workflows",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "sclaw": "./sclaw"
+  },
+  "scripts": {
+    "regression:backend": "node tests/runner.mjs backend-regression",
+    "regression:analysis": "node tests/runner.mjs analysis-regression",
+    "smoke:native": "node tests/runner.mjs smoke-native",
+    "smoke:docker": "node tests/runner.mjs smoke-docker"
+  },
+  "files": [
+    "sclaw",
+    "scripts/cli/**/*.js"
+  ],
+  "dependencies": {
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,45 @@
+# OS and editor settings
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/
+
+# Environment and local runtime config
+.env
+.env.local
+.env.*.local
+.env.pre-sqlite-migration.*.bak
+backend/.env
+frontend/.env.local
+!.env.example
+
+# Python cache and virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+core/.venv/
+
+# Node and frontend/backend build outputs
+node_modules/
+backend/dist/
+frontend/.next/
+backend/coverage/
+frontend/coverage/
+*tsconfig.tsbuildinfo
+
+# Runtime directories and generated artifacts
+.runtime/
+uploads/*
+!uploads/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# AI Editor & Agent configs
+.cursor/
+.kiro/

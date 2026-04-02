@@ -1,0 +1,16 @@
+# StructureClaw Backend-Hosted Python Analysis Runtime
+# Finite Element Analysis & Structural Design
+
+# FEA Libraries
+# The lightweight openseespy wheel is a wrapper; Linux CI needs the platform runtime package explicitly.
+openseespy==3.7.1.2
+openseespylinux==3.7.1.2; sys_platform == "linux"
+numpy==1.26.4
+
+# Web Framework
+fastapi==0.110.1
+uvicorn==0.29.0
+pydantic==2.6.4
+
+# Utilities
+httpx==0.27.0
