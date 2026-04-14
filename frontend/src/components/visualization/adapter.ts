@@ -413,7 +413,7 @@ function derivePlane(nodes: VisualizationNode[], dimension: 2 | 3) {
   return 'xz' as const
 }
 
-function buildAvailableViews(cases: VisualizationCase[], source: VisualizationSource, hasUtilization = false, hasBuckling = false): VisualizationViewMode[] {
+function buildAvailableViews(cases: VisualizationCase[], source: VisualizationSource, hasUtilization = false, hasBuckling = false, hasSteelConnection = false): VisualizationViewMode[] {
   if (source === 'model') {
     return ['model']
   }
@@ -436,6 +436,7 @@ function buildAvailableViews(cases: VisualizationCase[], source: VisualizationSo
     ...(hasReactions ? (['reactions'] as const) : []),
     ...(hasUtilization ? (['utilization'] as const) : []),
     ...(hasBuckling ? (['buckling'] as const) : []),
+    ...(hasSteelConnection ? (['extension:steel-connection'] as const) : []),
   ]
 }
 
@@ -536,6 +537,8 @@ export function buildVisualizationSnapshot(params: {
   memberUtilizationMap?: Record<string, number> | null
   /** bucklingModes from backend VisualizationHints, sorted by λ ascending */
   bucklingModes?: BucklingMode[] | null
+  /** connectionForceMap from backend VisualizationHints: nodeId → 6-DOF force vector */
+  connectionForceMap?: Record<string, { Fx?: number; Fy?: number; Fz?: number; Mx?: number; My?: number; Mz?: number }> | null
 }): VisualizationSnapshot | null {
   const model = params.model
   if (!model) {
@@ -660,6 +663,9 @@ export function buildVisualizationSnapshot(params: {
   const plane = semantics?.plane ?? derivePlane(nodes, dimension)
   const utilizationMap = deriveMemberUtilizationMap(data, params.memberUtilizationMap)
   const bucklingModes = deriveBucklingModes(data, params.bucklingModes)
+  const connectionForceMap = params.connectionForceMap && Object.keys(params.connectionForceMap).length > 0
+    ? params.connectionForceMap
+    : null
 
   // Inject steel member utilization ratios into all cases' elementResults
   if (utilizationMap && Object.keys(utilizationMap).length > 0) {
@@ -680,6 +686,7 @@ export function buildVisualizationSnapshot(params: {
     Object.values(item.elementResults).some((result) => typeof result.utilization === 'number')
   )
   const hasBuckling = Array.isArray(bucklingModes) && bucklingModes.length > 0
+  const hasSteelConnection = connectionForceMap !== null
   const extensions: VisualizationExtensionMap = {
     ...(hasUtilization && utilizationMap
       ? {
@@ -703,6 +710,17 @@ export function buildVisualizationSnapshot(params: {
           },
         }
       : {}),
+    ...(connectionForceMap
+      ? {
+          'skillhub.steel-connection': {
+            id: 'skillhub.steel-connection',
+            available: true,
+            data: {
+              connectionForceMap,
+            },
+          },
+        }
+      : {}),
   }
 
   return normalizeVisualizationSnapshot({
@@ -713,7 +731,7 @@ export function buildVisualizationSnapshot(params: {
     plane,
     coordinateSemantics: semantics?.semantics,
     analysisType: typeof analysis?.analysis_type === 'string' ? analysis.analysis_type : undefined,
-    availableViews: buildAvailableViews(cases, source, hasUtilization, hasBuckling),
+    availableViews: buildAvailableViews(cases, source, hasUtilization, hasBuckling, hasSteelConnection),
     defaultCaseId: cases.find((item) => item.kind === 'result')?.id || cases[0]?.id || (source === 'model' ? 'model' : 'result'),
     unitSystem: units.unitSystem,
     lengthUnit: units.lengthUnit,

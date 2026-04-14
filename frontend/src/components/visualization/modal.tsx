@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MessageKey } from '@/lib/i18n'
 import type { AppLocale } from '@/lib/stores/slices/preferences'
 import { formatNumber } from '@/lib/utils'
-import { getBucklingModes, BucklingModePanel } from './extensions'
+import { getVisualizationExtensionByView } from './extensions'
 import { VisualizationModalShell } from './modal-shell'
 import { StructuralScene } from './structural-scene'
 import type { SceneExportHandle } from './structural-scene'
@@ -112,7 +112,6 @@ export function StructuralVisualizationModal({
     () => snapshot?.title || t('visualizationTitle'),
     [snapshot, t]
   )
-  const bucklingModes = useMemo(() => getBucklingModes(snapshot), [snapshot])
   const activeCase = useMemo<VisualizationCase | null>(
     () => snapshot?.cases.find((item) => item.id === activeCaseId) || snapshot?.cases[0] || null,
     [activeCaseId, snapshot]
@@ -182,14 +181,19 @@ export function StructuralVisualizationModal({
               {snapshot.statusMessage}
             </div>
           ) : null}
-          {view === 'buckling' && bucklingModes.length ? (
-            <BucklingModePanel
-              modes={bucklingModes}
-              activeIndex={bucklingModeIndex}
-              title={t('visualizationViewBuckling')}
-              onSelect={setBucklingModeIndex}
-            />
-          ) : null}
+          {snapshot && activeCase ? (() => {
+            const ext = getVisualizationExtensionByView(view)
+            if (!ext?.renderAside) return null
+            return ext.renderAside({
+              snapshot,
+              activeCase,
+              activeView: view,
+              bucklingModeIndex,
+              forceMetric,
+              t,
+              onBucklingModeSelect: setBucklingModeIndex,
+            })
+          })() : null}
           {snapshot?.unsupportedElementTypes.length ? (
             <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-900 dark:text-amber-100">
               {t('visualizationUnsupportedElements')}: {snapshot.unsupportedElementTypes.join(', ')}
@@ -394,6 +398,19 @@ export function StructuralVisualizationModal({
             showUndeformed={showUndeformed}
             snapshot={snapshot}
             t={t}
+            extensionToolbarActions={(() => {
+              const ext = getVisualizationExtensionByView(view)
+              if (!ext?.renderToolbarActions) return null
+              return ext.renderToolbarActions({
+                snapshot,
+                activeCase,
+                activeView: view,
+                bucklingModeIndex,
+                forceMetric,
+                t,
+                onBucklingModeSelect: setBucklingModeIndex,
+              })
+            })()}
           />
           <div className="flex items-center justify-end gap-2 border-b border-border/70 px-4 py-2 dark:border-white/10">
             {([1, 2, 4] as const).map((scale) => (
