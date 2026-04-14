@@ -116,6 +116,7 @@ type StreamPayload =
 type VisualizationHintsPayload = {
   memberUtilizationMap?: Record<string, number>
   bucklingModes?: Array<{ lambda: number; modeShape: Record<string, [number, number, number]> }>
+  connectionForceMap?: Record<string, { Fx?: number; Fy?: number; Fz?: number; Mx?: number; My?: number; Mz?: number }>
 }
 
 type ConversationSummary = {
@@ -912,6 +913,7 @@ function buildResultSnapshotFromResult(
     mode: 'analysis-result',
     memberUtilizationMap: visualizationHints?.memberUtilizationMap,
     bucklingModes: visualizationHints?.bucklingModes,
+    connectionForceMap: visualizationHints?.connectionForceMap,
   })
 }
 
@@ -2392,6 +2394,7 @@ export function AIConsole() {
               mode: 'analysis-result',
               memberUtilizationMap: visualizationHints?.memberUtilizationMap,
               bucklingModes: visualizationHints?.bucklingModes,
+              connectionForceMap: visualizationHints?.connectionForceMap,
             })
             const modelSnapshot = buildVisualizationSnapshot({
               title: buildVisualizationTitle(result, trimmedInput.slice(0, 48) || t('untitledConversation')),

@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import type { MessageKey } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import type { VisualizationSnapshot, VisualizationViewMode } from './types'
@@ -31,6 +32,7 @@ type VisualizationToolbarProps = {
   onToggleNodeLabels: () => void
   onToggleUndeformed: () => void
   t: (key: MessageKey) => string
+  extensionToolbarActions?: ReactNode
 }
 
 const FORCE_LABELS: Record<ForceMetric, MessageKey> = {
@@ -71,6 +73,7 @@ export function VisualizationToolbar({
   onToggleNodeLabels,
   onToggleUndeformed,
   t,
+  extensionToolbarActions,
 }: VisualizationToolbarProps) {
   const supportsDeformedView = snapshot.availableViews.includes('deformed')
   const supportsForcesView = snapshot.availableViews.includes('forces')
@@ -175,6 +178,8 @@ export function VisualizationToolbar({
           </button>
         ))}
       </div>
+
+      {extensionToolbarActions}
     </div>
   )
 }

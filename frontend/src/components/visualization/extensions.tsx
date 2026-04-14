@@ -17,6 +17,10 @@ export type BucklingExtensionData = {
   bucklingModes: BucklingMode[]
 }
 
+export type SteelConnectionExtensionData = {
+  connectionForceMap: Record<string, { Fx?: number; Fy?: number; Fz?: number; Mx?: number; My?: number; Mz?: number }>
+}
+
 export type VisualizationLegendDefinition = {
   maxValue: number
   valueScale?: number
@@ -32,6 +36,7 @@ export type VisualizationExtensionContext = {
   bucklingModeIndex: number
   forceMetric: 'axial' | 'shear' | 'moment'
   t: (key: MessageKey) => string
+  onBucklingModeSelect?: (index: number) => void
 }
 
 export type VisualizationExtensionDefinition = {
@@ -40,6 +45,7 @@ export type VisualizationExtensionDefinition = {
   viewLabelKey: MessageKey
   isAvailable: (snapshot: VisualizationSnapshot | null) => boolean
   renderAside?: (context: VisualizationExtensionContext) => ReactNode
+  renderToolbarActions?: (context: VisualizationExtensionContext) => ReactNode
   getLegend?: (context: VisualizationExtensionContext) => VisualizationLegendDefinition | null
 }
 
@@ -65,6 +71,11 @@ export function getBucklingModes(snapshot: VisualizationSnapshot | null): Buckli
 export function getUtilizationMap(snapshot: VisualizationSnapshot | null): Record<string, number> | null {
   const entry = getExtensionEntry<UtilizationExtensionData>(snapshot, 'builtin.utilization')
   return entry?.data?.memberUtilizationMap || null
+}
+
+export function getSteelConnectionData(snapshot: VisualizationSnapshot | null): SteelConnectionExtensionData['connectionForceMap'] | null {
+  const entry = getExtensionEntry<SteelConnectionExtensionData>(snapshot, 'skillhub.steel-connection')
+  return entry?.data?.connectionForceMap || null
 }
 
 /**
@@ -149,7 +160,7 @@ export const visualizationExtensionRegistry: VisualizationExtensionDefinition[] 
     view: 'buckling',
     viewLabelKey: 'visualizationViewBuckling',
     isAvailable: (snapshot) => getBucklingModes(snapshot).length > 0,
-    renderAside: ({ snapshot, bucklingModeIndex, t }) => {
+    renderAside: ({ snapshot, bucklingModeIndex, onBucklingModeSelect, t }) => {
       const modes = getBucklingModes(snapshot)
       if (!modes.length) {
         return null
@@ -159,6 +170,7 @@ export const visualizationExtensionRegistry: VisualizationExtensionDefinition[] 
           modes={modes}
           activeIndex={bucklingModeIndex}
           title={t('visualizationViewBuckling')}
+          onSelect={onBucklingModeSelect}
         />
       )
     },
@@ -173,6 +185,36 @@ export const visualizationExtensionRegistry: VisualizationExtensionDefinition[] 
         label: `λ${bucklingModeIndex + 1}`,
         unit: '',
       }
+    },
+  },
+  {
+    id: 'skillhub.steel-connection',
+    view: 'extension:steel-connection',
+    viewLabelKey: 'visualizationViewSteelConnection',
+    isAvailable: (snapshot) => Boolean(getSteelConnectionData(snapshot)),
+    renderAside: ({ snapshot, t }) => {
+      const forceMap = getSteelConnectionData(snapshot)
+      if (!forceMap) return null
+      const entries = Object.entries(forceMap)
+      return (
+        <div className="rounded-2xl border border-border/70 bg-card/80 p-4 dark:border-white/10 dark:bg-slate-950/40">
+          <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t('visualizationSteelConnectionForces')}</div>
+          <div className="mt-3 space-y-3">
+            {entries.map(([nodeId, forces]) => (
+              <div key={nodeId}>
+                <div className="mb-1 text-xs font-semibold text-foreground">{nodeId}</div>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  {(['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'] as const).map((key) => {
+                    const val = forces[key]
+                    if (val === undefined) return null
+                    return <div key={key}>{key}: {val.toFixed(2)}</div>
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
     },
   },
 ]
